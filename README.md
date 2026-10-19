@@ -1,23 +1,37 @@
 # BSDSF24A053-OS-A02
 
-A custom implementation of the Unix `ls` command written in C as part of an Operating Systems assignment.
+<div align="center">
+
+![C](https://img.shields.io/badge/Language-C-blue.svg)
+![Linux](https://img.shields.io/badge/Platform-Linux%20%2F%20Unix-lightgrey.svg)
+![Assignment](https://img.shields.io/badge/Type-Operating%20Systems%20Assignment-orange.svg)
+
+A custom implementation of the Unix `ls` command written in C for the Operating Systems assignment.
+
+</div>
 
 ## Overview
 
-This project recreates core `ls` functionality to list directory contents, display metadata, handle sorting, and support recursive traversal. It is built using standard C libraries and compiled with GCC.
+This project recreates a simplified version of the standard Unix `ls` command to list directory contents, inspect file metadata, sort entries, and support recursive directory traversal. The implementation is lightweight, portable, and built using standard C libraries with Linux/Unix system calls such as `opendir()`, `readdir()`, `stat()`, and `lstat()`.
 
-The implementation provides a lightweight command-line utility similar to the standard Unix `ls`, designed to demonstrate essential operating system concepts such as directory traversal, file metadata inspection, and terminal-aware output formatting.
+It is designed to demonstrate core operating system concepts including:
+
+- directory traversal
+- file and directory metadata handling
+- permission and type inspection
+- terminal-aware formatting
+- recursive listing behavior
 
 ## Features
 
 - Default directory listing
 - Long format output with `-l`
 - Recursive listing with `-R`
-- Horizontal column layout support with `-x`
+- Horizontal column layout with `-x`
 - Alphabetical sorting of entries
 - File type and permission inspection using `stat`/`lstat`
-- Colorized output for executable files and directories
-- Terminal-aware column formatting
+- Colored output for executables, directories, and special files
+- Terminal-aware formatting for different window widths
 
 ## Project Structure
 
@@ -31,32 +45,36 @@ The implementation provides a lightweight command-line utility similar to the st
 ├── obj/
 ├── bin/
 ├── man/
-└── .gitignore
+├── .gitignore
+└── LICENSE (if present)
 ```
 
+### Key Files
+
 - `src/ls-v1.0.0.c` — main implementation of the `ls` utility
-- `Makefile` — build automation
-- `bin/ls` — generated executable
-- `obj/` — compiled object files
-- `man/` — optional manual-related files or support assets
+- `Makefile` — build automation for compiling the project
+- `bin/ls` — generated executable output
+- `obj/` — object files from compilation
+- `REPORT.md` — project report or documentation
+- `man/` — optional manual/support assets
 
 ## Requirements
 
-Before building the project, ensure the following are installed on your system:
+Before building the project, make sure the following are installed:
 
-- GCC or any C compiler compatible with the GNU C standard
+- GCC or any compatible C compiler
 - Make
-- Linux or Unix-like environment
+- Linux or a Unix-like environment
 
-## 2. Build the Project
+## Build
 
-Run `make` to compile the source code into the `bin/` directory:
+From the project root, run:
 
 ```bash
 make
 ```
 
-This creates the binary:
+This compiles the source and creates the executable in `bin/`:
 
 ```bash
 ./bin/ls
@@ -73,49 +91,55 @@ This creates the binary:
 - `-l` — long listing format
 - `-R` — recursive listing
 - `-x` — horizontal column display
-- `--help` or similar usage output, if supported by the implementation
+- `--help` — usage help (if implemented)
 
-## 3. Usage Examples
+## Examples
 
 ```bash
 # Basic listing
 ./bin/ls
 
-# Long listing format
+# Long format listing
 ./bin/ls -l
 
-# Recursive listing
+# Recursive directory listing
 ./bin/ls -R src/
 
-# Horizontal column layout
+# Horizontal column output
 ./bin/ls -x
 
 # List a specific directory
 ./bin/ls /etc
 
-# Long listing of a directory recursively
+# Recursive long listing
 ./bin/ls -l -R .
 ```
 
 ## Clean Build Artifacts
 
-To remove compiled binaries and object files:
+To remove compiled objects and generated binaries:
 
 ```bash
 make clean
 ```
 
-This deletes generated artifacts from `bin/` and `obj/` while preserving the source files.
+This removes generated files from `bin/` and `obj/` while keeping the source code intact.
 
 ## Notes
 
-This project is intended for educational and academic purposes. It demonstrates how a simplified Unix-style file listing utility is implemented using system calls such as `opendir()`, `readdir()`, `stat()`, and `lstat()`.
+This project is intended for educational and academic purposes. It demonstrates how a simplified Unix-style file listing utility can be implemented from scratch using system calls and core C programming concepts.
 
 ## Author
 
-- Student ID: BSDSF24A053
-- Course: Operating Systems Assignment 02
+- Student ID: `BSDSF24A053`
+- Course: `Operating Systems Assignment 02`
 
 ## License
 
-This project is provided for academic use and learning purposes.
+This project is provided for academic and learning purposes.
+
+---
+
+<p align="center">
+  <strong>Built as a practical Unix command-line simulation in C.</strong>
+</p>
