@@ -21,3 +21,13 @@ First all names are read into an array and the longest name is found. The column
 **Q2. What is the purpose of `ioctl` here? What are the limits of a fixed 80-column fallback?**
 
 `ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws)` asks the terminal driver for the window size (`ws.ws_col` is the number of columns), so the layout matches the real terminal. With only a fixed 80 columns, a wide terminal would waste space with too few columns, and a narrow terminal (or a split pane) would get lines longer than the screen that wrap in the middle of names and break the alignment. It also would not react to the user resizing the window. The 80-column fallback is only used when `ioctl` fails, for example when output is redirected to a file or a pipe.
+
+## Feature 4 - ls-v1.3.0: Horizontal Column Display (-x)
+
+**Q1. Compare the complexity of "down then across" and "across" printing. Which needs more pre-calculation?**
+
+The vertical ("down then across") mode needs more pre-calculation. Before printing anything it must know the number of columns and then the number of rows (`ceil(n / cols)`), because the index of each item depends on `rows` (`r + c * rows`), and it needs a nested loop with an index jump. The horizontal mode only needs the column width; it walks the array once in order, keeps a running screen position, prints each name padded to the column width, and starts a new line when the next item would not fit. It never needs to know the number of rows in advance.
+
+**Q2. How did you manage the display modes (-l, -x, default)?**
+
+I use an `enum` (`MODE_DEFAULT`, `MODE_LONG`, `MODE_HORIZONTAL`) stored in a variable `display_mode`. The `getopt()` loop in `main` sets it when it sees `-l` or `-x` (if both are given, the last one wins). `do_ls()` reads all the names into an array and then uses a `switch (display_mode)` to call `display_long()`, `display_horizontal()` or `display_columns()`. Because the decision is made in one place, after the data has been read, adding a new mode is just a new enum value and a new `case`.
