@@ -4,9 +4,9 @@ A custom implementation of the Unix `ls` command written in C as part of an Oper
 
 ## Overview
 
-This project recreates core `ls` functionality to list directory contents, display metadata, handle sorting, and support recursive traversal. It is built using standard C libraries and compiled with `gcc` via a `Makefile`.
+This project recreates core `ls` functionality to list directory contents, display metadata, handle sorting, and support recursive traversal. It is built using standard C libraries and compiled with GCC.
 
-The implementation provides a lightweight command-line utility similar to the standard Unix `ls`, designed to demonstrate essential operating system concepts such as directory traversal, file metadata access, terminal formatting, and recursion.
+The implementation provides a lightweight command-line utility similar to the standard Unix `ls`, designed to demonstrate essential operating system concepts such as directory traversal, file metadata inspection, and terminal-aware output formatting.
 
 ## Features
 
@@ -48,9 +48,9 @@ Before building the project, ensure the following are installed on your system:
 - Make
 - Linux or Unix-like environment
 
-## Build the Project
+## 2. Build the Project
 
-To compile the source code and generate the executable in `bin/`:
+Run `make` to compile the source code into the `bin/` directory:
 
 ```bash
 make
@@ -75,7 +75,7 @@ This creates the binary:
 - `-x` — horizontal column display
 - `--help` or similar usage output, if supported by the implementation
 
-## Usage Examples
+## 3. Usage Examples
 
 ```bash
 # Basic listing
@@ -109,7 +109,7 @@ This deletes generated artifacts from `bin/` and `obj/` while preserving the sou
 
 ## Notes
 
-This project is intended for educational and academic purposes. It demonstrates how a simplified Unix-style file listing utility is implemented using system calls such as `opendir()`, `readdir()`, `stat()`, `lstat()`, and recursive directory traversal.
+This project is intended for educational and academic purposes. It demonstrates how a simplified Unix-style file listing utility is implemented using system calls such as `opendir()`, `readdir()`, `stat()`, and `lstat()`.
 
 ## Author
 
