@@ -1,5 +1,5 @@
 /*
- * ls-v1.1.0 : adds the -l (long listing) option
+ * ls-v1.2.0 : default output in columns, "down then across"
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,13 +9,20 @@
 #include <dirent.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
 #include <pwd.h>
 #include <grp.h>
 #include <time.h>
 #include <limits.h>
 
+#define SPACING 2
+
 void do_ls(const char *dir);
 void do_ls_long(const char *dir);
+char **read_names(const char *dir, int *count, int *maxlen);
+void free_names(char **names, int n);
+int  get_term_width(void);
+void display_columns(char **names, int n, int maxlen);
 void mode_to_string(mode_t mode, char *str);
 void print_long_entry(const char *dir, const char *name,
                       int lw, int uw, int gw, int sw);
@@ -50,21 +57,89 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-/* original behaviour: one name per line */
+/* default behaviour: columns, "down then across" */
 void do_ls(const char *dir)
+{
+    int n, maxlen;
+    char **names = read_names(dir, &n, &maxlen);
+    if (names == NULL)
+        return;
+    display_columns(names, n, maxlen);
+    free_names(names, n);
+}
+
+/* Read every visible entry into a dynamic array of strings.
+ * Returns NULL on error. *count = number of names, *maxlen = longest name. */
+char **read_names(const char *dir, int *count, int *maxlen)
 {
     DIR *dp = opendir(dir);
     if (dp == NULL) {
         fprintf(stderr, "ls: cannot access '%s': %s\n", dir, strerror(errno));
-        return;
+        return NULL;
     }
+    int cap = 64, n = 0, max = 0;
+    char **names = malloc(cap * sizeof(char *));
+    if (names == NULL) { perror("malloc"); exit(EXIT_FAILURE); }
+
     struct dirent *entry;
     while ((entry = readdir(dp)) != NULL) {
         if (entry->d_name[0] == '.')
             continue;
-        printf("%s\n", entry->d_name);
+        if (n == cap) {                         /* grow the array */
+            cap *= 2;
+            char **tmp = realloc(names, cap * sizeof(char *));
+            if (tmp == NULL) { perror("realloc"); exit(EXIT_FAILURE); }
+            names = tmp;
+        }
+        names[n] = strdup(entry->d_name);
+        if (names[n] == NULL) { perror("strdup"); exit(EXIT_FAILURE); }
+        int len = (int)strlen(names[n]);
+        if (len > max) max = len;
+        n++;
     }
     closedir(dp);
+    *count = n;
+    *maxlen = max;
+    return names;
+}
+
+void free_names(char **names, int n)
+{
+    for (int i = 0; i < n; i++)
+        free(names[i]);
+    free(names);
+}
+
+int get_term_width(void)
+{
+    struct winsize ws;
+    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == 0 && ws.ws_col > 0)
+        return ws.ws_col;
+    return 80;                                   /* fallback */
+}
+
+/* "down then across": item index = row + col * rows */
+void display_columns(char **names, int n, int maxlen)
+{
+    if (n == 0) return;
+    int colw  = maxlen + SPACING;
+    int width = get_term_width();
+    int cols  = width / colw;
+    if (cols < 1) cols = 1;
+    if (cols > n) cols = n;
+    int rows  = (n + cols - 1) / cols;           /* ceil(n / cols) */
+
+    for (int r = 0; r < rows; r++) {
+        for (int c = 0; c < cols; c++) {
+            int idx = r + c * rows;
+            if (idx >= n) break;
+            int len = (int)strlen(names[idx]);
+            printf("%s", names[idx]);
+            if (idx + rows < n)                  /* another item follows on this row */
+                printf("%*s", colw - len, "");
+        }
+        printf("\n");
+    }
 }
 
 /* st_mode -> "drwxr-xr-x" (11 bytes needed in str) */
