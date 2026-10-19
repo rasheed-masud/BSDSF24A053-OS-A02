@@ -41,3 +41,19 @@ I use an `enum` (`MODE_DEFAULT`, `MODE_LONG`, `MODE_HORIZONTAL`) stored in a var
 **Q2. What is the purpose and signature of the `qsort()` comparison function? Why `const void *`?**
 
 `qsort(base, nmemb, size, compar)` is a generic sort that works on any element type, so it does not know how to compare elements. We supply `int compar(const void *a, const void *b)`, which must return a negative number if `*a` sorts before `*b`, zero if equal, and a positive number if after. `qsort` passes pointers *to the array elements*. Our elements are `char *`, so each argument is really a `char **`; inside the function I cast `a` and `b` to `char * const *`, dereference once to get the strings, and return `strcmp(s1, s2)`. The parameters are `const void *` because `qsort` has to accept any element type (`void *` is the generic pointer type in C) and because a comparison must not modify the data (`const`).
+
+## Feature 6 - ls-v1.5.0: Colorized Output
+
+**Q1. How do ANSI escape codes produce colour? Show the sequence for green text.**
+
+The terminal watches the stream of characters it receives. A sequence starting with the ESC character (octal `\033`) followed by `[` is not displayed; it is a control command. `ESC[` followed by numbers and a final `m` is the "select graphic rendition" command, which sets text attributes: for example `0` resets, `7` is reverse video, `31` is red, `32` is green, `34` is blue, `35` is magenta/pink. Everything printed after the command uses that style until it is reset. Green text:
+
+```c
+printf("\033[0;32m%s\033[0m", filename);   /* start green, print text, reset */
+```
+
+The final `\033[0m` is important; without it the rest of the terminal output stays green.
+
+**Q2. Which bits of `st_mode` determine whether a file is executable?**
+
+There are three execute bits, one for each class of user: `S_IXUSR` (0100) for the owner, `S_IXGRP` (0010) for the group, and `S_IXOTH` (0001) for everyone else. A file is executable by the owner if `st_mode & S_IXUSR` is non-zero, by the group if `st_mode & S_IXGRP` is non-zero, and by others if `st_mode & S_IXOTH` is non-zero. For colouring I test whether any of the three is set: `st_mode & (S_IXUSR | S_IXGRP | S_IXOTH)`. Directories also have `x` bits (meaning "may enter"), so the directory check is done first and a directory is coloured blue, not green.

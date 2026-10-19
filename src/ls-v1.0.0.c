@@ -1,5 +1,5 @@
 /*
- * ls-v1.4.0 : alphabetical sort with qsort()
+ * ls-v1.5.0 : colorized output by file type
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,13 +25,15 @@ void do_ls(const char *dir);
 char **read_names(const char *dir, int *count, int *maxlen);
 void free_names(char **names, int n);
 int  get_term_width(void);
-void display_columns(char **names, int n, int maxlen);
-void display_horizontal(char **names, int n, int maxlen);
+void display_columns(const char *dir, char **names, int n, int maxlen);
+void display_horizontal(const char *dir, char **names, int n, int maxlen);
 void display_long(const char *dir, char **names, int n);
 void mode_to_string(mode_t mode, char *str);
 void print_long_entry(const char *dir, const char *name,
                       int lw, int uw, int gw, int sw);
 int  compare_names(const void *a, const void *b);
+void print_colored(const char *name, mode_t mode);
+void print_name(const char *dir, const char *name);
 
 int main(int argc, char *argv[])
 {
@@ -80,10 +82,10 @@ void do_ls(const char *dir)
         display_long(dir, names, n);
         break;
     case MODE_HORIZONTAL:
-        display_horizontal(names, n, maxlen);
+        display_horizontal(dir, names, n, maxlen);
         break;
     default:
-        display_columns(names, n, maxlen);
+        display_columns(dir, names, n, maxlen);
         break;
     }
 
@@ -141,7 +143,7 @@ int get_term_width(void)
 }
 
 /* "down then across": item index = row + col * rows */
-void display_columns(char **names, int n, int maxlen)
+void display_columns(const char *dir, char **names, int n, int maxlen)
 {
     if (n == 0) return;
     int colw  = maxlen + SPACING;
@@ -156,7 +158,7 @@ void display_columns(char **names, int n, int maxlen)
             int idx = r + c * rows;
             if (idx >= n) break;
             int len = (int)strlen(names[idx]);
-            printf("%s", names[idx]);
+            print_name(dir, names[idx]);
             if (idx + rows < n)                  /* another item follows on this row */
                 printf("%*s", colw - len, "");
         }
@@ -165,7 +167,7 @@ void display_columns(char **names, int n, int maxlen)
 }
 
 /* "across": fill the line left to right, wrap when the next column won't fit */
-void display_horizontal(char **names, int n, int maxlen)
+void display_horizontal(const char *dir, char **names, int n, int maxlen)
 {
     if (n == 0) return;
     int colw  = maxlen + SPACING;
@@ -182,7 +184,7 @@ void display_horizontal(char **names, int n, int maxlen)
                 printf("%*s", colw - prev, "");  /* pad previous item */
             }
         }
-        printf("%s", names[i]);
+        print_name(dir, names[i]);
         pos += colw;
         prev = len;
     }
@@ -197,6 +199,57 @@ int compare_names(const void *a, const void *b)
     const char *s1 = *(char * const *)a;
     const char *s2 = *(char * const *)b;
     return strcmp(s1, s2);
+}
+
+
+/* ---- colors (ANSI escape codes) ---- */
+#define COLOR_RESET   "\033[0m"
+#define COLOR_BLUE    "\033[0;34m"
+#define COLOR_GREEN   "\033[0;32m"
+#define COLOR_RED     "\033[0;31m"
+#define COLOR_PINK    "\033[0;35m"
+#define COLOR_REVERSE "\033[7m"
+
+static int has_suffix(const char *name, const char *suffix)
+{
+    size_t ln = strlen(name), ls = strlen(suffix);
+    return ln > ls && strcmp(name + ln - ls, suffix) == 0;
+}
+
+/* print a file name in the colour that matches its type */
+void print_colored(const char *name, mode_t mode)
+{
+    const char *color = NULL;
+
+    if (S_ISLNK(mode))
+        color = COLOR_PINK;
+    else if (S_ISDIR(mode))
+        color = COLOR_BLUE;
+    else if (S_ISCHR(mode) || S_ISBLK(mode) || S_ISFIFO(mode) || S_ISSOCK(mode))
+        color = COLOR_REVERSE;
+    else if (has_suffix(name, ".tar") || has_suffix(name, ".gz") ||
+             has_suffix(name, ".zip") || has_suffix(name, ".tgz"))
+        color = COLOR_RED;
+    else if (mode & (S_IXUSR | S_IXGRP | S_IXOTH))
+        color = COLOR_GREEN;
+
+    /* like "ls --color=auto": only emit escape codes when writing to a terminal */
+    if (color && isatty(STDOUT_FILENO))
+        printf("%s%s%s", color, name, COLOR_RESET);
+    else
+        printf("%s", name);
+}
+
+/* stat the entry (lstat: links are not followed) and print it coloured */
+void print_name(const char *dir, const char *name)
+{
+    char path[PATH_MAX];
+    struct stat st;
+    snprintf(path, sizeof(path), "%s/%s", dir, name);
+    if (lstat(path, &st) == -1)
+        printf("%s", name);
+    else
+        print_colored(name, st.st_mode);
 }
 
 /* st_mode -> "drwxr-xr-x" (11 bytes needed in str) */
@@ -270,7 +323,8 @@ void print_long_entry(const char *dir, const char *name,
            t + 4, t + 8);
     if (recent) printf("%.5s", t + 11);   /* hh:mm */
     else        printf("%5.4s", t + 20);  /* year, right aligned */
-    printf(" %s", name);
+    printf(" ");
+    print_colored(name, st.st_mode);
 
     if (S_ISLNK(st.st_mode)) {
         char target[PATH_MAX];
