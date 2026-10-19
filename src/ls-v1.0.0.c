@@ -1,5 +1,5 @@
 /*
- * ls-v1.3.0 : adds -x (horizontal "across" display)
+ * ls-v1.4.0 : alphabetical sort with qsort()
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,6 +31,7 @@ void display_long(const char *dir, char **names, int n);
 void mode_to_string(mode_t mode, char *str);
 void print_long_entry(const char *dir, const char *name,
                       int lw, int uw, int gw, int sw);
+int  compare_names(const void *a, const void *b);
 
 int main(int argc, char *argv[])
 {
@@ -71,6 +72,8 @@ void do_ls(const char *dir)
     char **names = read_names(dir, &n, &maxlen);
     if (names == NULL)
         return;
+
+    qsort(names, n, sizeof(char *), compare_names);   /* sort before ANY display */
 
     switch (display_mode) {
     case MODE_LONG:
@@ -184,6 +187,16 @@ void display_horizontal(char **names, int n, int maxlen)
         prev = len;
     }
     printf("\n");
+}
+
+
+/* qsort passes POINTERS TO the array elements; each element is a char *,
+ * so each argument is really a char ** hidden behind const void *. */
+int compare_names(const void *a, const void *b)
+{
+    const char *s1 = *(char * const *)a;
+    const char *s2 = *(char * const *)b;
+    return strcmp(s1, s2);
 }
 
 /* st_mode -> "drwxr-xr-x" (11 bytes needed in str) */

@@ -31,3 +31,13 @@ The vertical ("down then across") mode needs more pre-calculation. Before printi
 **Q2. How did you manage the display modes (-l, -x, default)?**
 
 I use an `enum` (`MODE_DEFAULT`, `MODE_LONG`, `MODE_HORIZONTAL`) stored in a variable `display_mode`. The `getopt()` loop in `main` sets it when it sees `-l` or `-x` (if both are given, the last one wins). `do_ls()` reads all the names into an array and then uses a `switch (display_mode)` to call `display_long()`, `display_horizontal()` or `display_columns()`. Because the decision is made in one place, after the data has been read, adding a new mode is just a new enum value and a new `case`.
+
+## Feature 5 - ls-v1.4.0: Alphabetical Sort
+
+**Q1. Why must all entries be read into memory before sorting? What are the drawbacks for huge directories?**
+
+`readdir()` returns entries in whatever order the file system stores them, and gives them to us one at a time. A sort needs to compare every entry with the others, so the whole set must be available before the first line can be printed; we cannot know which name comes first until we have seen all of them. For a directory with millions of files this means a lot of memory (one `strdup`'d string plus a pointer per entry), a long delay before any output appears, and the cost of sorting (`O(n log n)` comparisons). Unsorted `ls -f` avoids this by printing entries as it reads them, in constant memory.
+
+**Q2. What is the purpose and signature of the `qsort()` comparison function? Why `const void *`?**
+
+`qsort(base, nmemb, size, compar)` is a generic sort that works on any element type, so it does not know how to compare elements. We supply `int compar(const void *a, const void *b)`, which must return a negative number if `*a` sorts before `*b`, zero if equal, and a positive number if after. `qsort` passes pointers *to the array elements*. Our elements are `char *`, so each argument is really a `char **`; inside the function I cast `a` and `b` to `char * const *`, dereference once to get the strings, and return `strcmp(s1, s2)`. The parameters are `const void *` because `qsort` has to accept any element type (`void *` is the generic pointer type in C) and because a comparison must not modify the data (`const`).
