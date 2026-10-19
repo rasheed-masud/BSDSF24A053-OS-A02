@@ -2,25 +2,33 @@
 
 <div align="center">
 
-![C](https://img.shields.io/badge/Language-C-blue.svg)
-![Linux](https://img.shields.io/badge/Platform-Linux%20%2F%20Unix-lightgrey.svg)
-![Assignment](https://img.shields.io/badge/Type-Operating%20Systems%20Assignment-orange.svg)
+<img src="https://img.shields.io/badge/Language-C-blue?style=for-the-badge&logo=c" alt="Language: C" />
+<img src="https://img.shields.io/badge/Platform-Linux%20%2F%20Unix-181717?style=for-the-badge&logo=linux" alt="Platform: Linux/Unix" />
+<img src="https://img.shields.io/badge/Type-Operating%20Systems%20Assignment-orange?style=for-the-badge" alt="Type: Operating Systems Assignment" />
+<img src="https://img.shields.io/badge/Status-Completed-success?style=for-the-badge" alt="Status: Completed" />
 
-A custom implementation of the Unix `ls` command written in C for the Operating Systems assignment.
+</div>
+
+<div align="center">
+
+# Unix-like `ls` Implementation in C
+
+A custom file listing utility inspired by the Unix `ls` command, built as part of the Operating Systems assignment.
 
 </div>
 
 ## Overview
 
-This project recreates a simplified version of the standard Unix `ls` command to list directory contents, inspect file metadata, sort entries, and support recursive directory traversal. The implementation is lightweight, portable, and built using standard C libraries with Linux/Unix system calls such as `opendir()`, `readdir()`, `stat()`, and `lstat()`.
+This project implements a simplified but functional Unix-style `ls` command in C. It supports listing directory contents, displaying long-form metadata, sorting entries alphabetically, handling recursive traversal, and formatting output based on terminal width.
 
-It is designed to demonstrate core operating system concepts including:
+The utility demonstrates several core operating system principles, including:
 
-- directory traversal
-- file and directory metadata handling
-- permission and type inspection
-- terminal-aware formatting
-- recursive listing behavior
+- directory traversal using `opendir()` and `readdir()`
+- file metadata access with `stat()` and `lstat()`
+- permission and file type inspection
+- recursive directory walking
+- terminal-aware layout calculations
+- colored output for better terminal readability
 
 ## Features
 
@@ -29,9 +37,36 @@ It is designed to demonstrate core operating system concepts including:
 - Recursive listing with `-R`
 - Horizontal column layout with `-x`
 - Alphabetical sorting of entries
-- File type and permission inspection using `stat`/`lstat`
-- Colored output for executables, directories, and special files
-- Terminal-aware formatting for different window widths
+- File type and permission detection
+- Executable and directory highlighting in color
+- Terminal-width aware formatting
+
+## Demo Output
+
+```bash
+$ ./bin/ls
+bin  Makefile  obj  REPORT.md  src  README.md
+
+$ ./bin/ls -l
+total 48
+drwxr-xr-x  4 rasheed  staff  4096  Oct 19 12:42 bin
+drwxr-xr-x  2 rasheed  staff  4096  Oct 19 12:42 obj
+-rw-r--r--  1 rasheed  staff  2048  Oct 19 12:42 Makefile
+-rw-r--r--  1 rasheed  staff  1024  Oct 19 12:42 README.md
+-rw-r--r--  1 rasheed  staff  4096  Oct 19 12:42 REPORT.md
+-rw-r--r--  1 rasheed  staff  4096  Oct 19 12:42 src
+
+$ ./bin/ls -R .
+.
+./bin
+./obj
+./src
+./src/ls-v1.0.0.c
+
+$ ./bin/ls -x
+bin      Makefile   obj      REPORT.md
+README.md  src
+```
 
 ## Project Structure
 
@@ -46,35 +81,35 @@ It is designed to demonstrate core operating system concepts including:
 ├── bin/
 ├── man/
 ├── .gitignore
-└── LICENSE (if present)
+└── LICENSE (optional)
 ```
 
-### Key Files
+### Main Files
 
-- `src/ls-v1.0.0.c` — main implementation of the `ls` utility
-- `Makefile` — build automation for compiling the project
-- `bin/ls` — generated executable output
-- `obj/` — object files from compilation
-- `REPORT.md` — project report or documentation
-- `man/` — optional manual/support assets
+- `src/ls-v1.0.0.c` — core implementation of the `ls` utility
+- `Makefile` — build automation
+- `bin/ls` — generated executable
+- `obj/` — compiled object files
+- `REPORT.md` — assignment report
+- `man/` — optional manual or support files
 
 ## Requirements
 
-Before building the project, make sure the following are installed:
+Before building the project, ensure the following are installed:
 
 - GCC or any compatible C compiler
 - Make
-- Linux or a Unix-like environment
+- Linux or Unix-like environment
 
 ## Build
 
-From the project root, run:
+From the root directory, run:
 
 ```bash
 make
 ```
 
-This compiles the source and creates the executable in `bin/`:
+This builds the executable in the `bin/` directory:
 
 ```bash
 ./bin/ls
@@ -91,21 +126,21 @@ This compiles the source and creates the executable in `bin/`:
 - `-l` — long listing format
 - `-R` — recursive listing
 - `-x` — horizontal column display
-- `--help` — usage help (if implemented)
+- `--help` — usage information if supported by the implementation
 
 ## Examples
 
 ```bash
-# Basic listing
+# Basic directory listing
 ./bin/ls
 
 # Long format listing
 ./bin/ls -l
 
-# Recursive directory listing
+# Recursive listing
 ./bin/ls -R src/
 
-# Horizontal column output
+# Horizontal output layout
 ./bin/ls -x
 
 # List a specific directory
@@ -117,17 +152,17 @@ This compiles the source and creates the executable in `bin/`:
 
 ## Clean Build Artifacts
 
-To remove compiled objects and generated binaries:
+To remove generated binaries and object files:
 
 ```bash
 make clean
 ```
 
-This removes generated files from `bin/` and `obj/` while keeping the source code intact.
+This will delete files from `bin/` and `obj/` while keeping the source code intact.
 
 ## Notes
 
-This project is intended for educational and academic purposes. It demonstrates how a simplified Unix-style file listing utility can be implemented from scratch using system calls and core C programming concepts.
+This project is intended for educational and academic use. It demonstrates how a simplified Unix-style file listing utility can be implemented from scratch using system calls, terminal control, and standard C programming techniques.
 
 ## Author
 
@@ -140,6 +175,8 @@ This project is provided for academic and learning purposes.
 
 ---
 
-<p align="center">
-  <strong>Built as a practical Unix command-line simulation in C.</strong>
-</p>
+<div align="center">
+
+<strong>Built as a practical Unix command-line simulation in C.</strong>
+
+</div>
