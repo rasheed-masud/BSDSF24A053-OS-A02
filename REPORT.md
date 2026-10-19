@@ -57,3 +57,13 @@ The final `\033[0m` is important; without it the rest of the terminal output sta
 **Q2. Which bits of `st_mode` determine whether a file is executable?**
 
 There are three execute bits, one for each class of user: `S_IXUSR` (0100) for the owner, `S_IXGRP` (0010) for the group, and `S_IXOTH` (0001) for everyone else. A file is executable by the owner if `st_mode & S_IXUSR` is non-zero, by the group if `st_mode & S_IXGRP` is non-zero, and by others if `st_mode & S_IXOTH` is non-zero. For colouring I test whether any of the three is set: `st_mode & (S_IXUSR | S_IXGRP | S_IXOTH)`. Directories also have `x` bits (meaning "may enter"), so the directory check is done first and a directory is coloured blue, not green.
+
+## Feature 7 - ls-v1.6.0: Recursive Listing (-R)
+
+**Q1. What is a base case? What is the base case in your recursive ls?**
+
+A base case is the condition under which a recursive function returns without calling itself again; without it the recursion never ends. In my `do_ls()` there is no explicit `if` for it. The base case is a directory with no sub-directories (or an empty directory): the loop over the entries finds no entry for which `S_ISDIR()` is true, so no further recursive call is made and the function returns. Skipping `.` and `..` is also necessary, otherwise every directory would recurse into itself and its parent forever. Using `lstat()` means symbolic links to directories are not followed, which avoids cycles caused by links.
+
+**Q2. Why must a full path be built before the recursive call? What happens if we call `do_ls("subdir")`?**
+
+`opendir()` and `lstat()` interpret relative paths relative to the *current working directory* of the process, which never changes while the program runs. The entry name `subdir` is only a name inside `parent_dir`. If we called `do_ls("subdir")`, the program would look for `./subdir` in the directory where it was started, which either does not exist (error: "cannot access") or, worse, is a different directory with the same name, so we would list the wrong content. Building `parent_dir/subdir` gives a path that is correct from the current directory, and the same rule is applied at every level (`a/b/c`, ...). The full path is also what is printed in the `path:` header line.
