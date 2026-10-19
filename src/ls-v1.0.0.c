@@ -1,5 +1,5 @@
 /*
- * ls-v1.5.0 : colorized output by file type
+ * ls-v1.6.0 : recursive listing (-R)
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,6 +20,7 @@
 typedef enum { MODE_DEFAULT, MODE_LONG, MODE_HORIZONTAL } display_t;
 
 static display_t display_mode = MODE_DEFAULT;
+static int recursive_flag = 0;
 
 void do_ls(const char *dir);
 char **read_names(const char *dir, int *count, int *maxlen);
@@ -39,7 +40,7 @@ int main(int argc, char *argv[])
 {
     int opt;
 
-    while ((opt = getopt(argc, argv, "lx")) != -1) {
+    while ((opt = getopt(argc, argv, "lxR")) != -1) {
         switch (opt) {
         case 'l':
             display_mode = MODE_LONG;
@@ -47,8 +48,11 @@ int main(int argc, char *argv[])
         case 'x':
             display_mode = MODE_HORIZONTAL;
             break;
+        case 'R':
+            recursive_flag = 1;
+            break;
         default:
-            fprintf(stderr, "Usage: %s [-lx] [directory...]\n", argv[0]);
+            fprintf(stderr, "Usage: %s [-lxR] [directory...]\n", argv[0]);
             exit(EXIT_FAILURE);
         }
     }
@@ -60,12 +64,19 @@ int main(int argc, char *argv[])
         for (int i = optind; i < argc; i++) {
             if (i > optind)
                 printf("\n");
-            if (ndirs > 1)
+            if (ndirs > 1 && !recursive_flag)
                 printf("%s:\n", argv[i]);
             do_ls(argv[i]);
         }
     }
     return 0;
+}
+
+/* build "dir/name" without doubling the slash when dir already ends in '/' */
+static void join_path(char *out, size_t size, const char *dir, const char *name)
+{
+    size_t len = strlen(dir);
+    snprintf(out, size, "%s%s%s", dir, (len > 0 && dir[len - 1] == '/') ? "" : "/", name);
 }
 
 void do_ls(const char *dir)
@@ -74,6 +85,9 @@ void do_ls(const char *dir)
     char **names = read_names(dir, &n, &maxlen);
     if (names == NULL)
         return;
+
+    if (recursive_flag)
+        printf("%s:\n", dir);
 
     qsort(names, n, sizeof(char *), compare_names);   /* sort before ANY display */
 
@@ -87,6 +101,22 @@ void do_ls(const char *dir)
     default:
         display_columns(dir, names, n, maxlen);
         break;
+    }
+
+    if (recursive_flag) {
+        for (int i = 0; i < n; i++) {
+            if (strcmp(names[i], ".") == 0 || strcmp(names[i], "..") == 0)
+                continue;
+            char path[PATH_MAX];
+            struct stat st;
+            join_path(path, sizeof(path), dir, names[i]);   /* "dir/entry" */
+            if (lstat(path, &st) == -1)
+                continue;
+            if (S_ISDIR(st.st_mode)) {                      /* lstat: symlinks are not followed */
+                printf("\n");
+                do_ls(path);                                /* recursive call */
+            }
+        }
     }
 
     free_names(names, n);
